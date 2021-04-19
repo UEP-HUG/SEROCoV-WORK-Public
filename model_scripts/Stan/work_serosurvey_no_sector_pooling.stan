@@ -5,7 +5,7 @@
 //
 // We have input data from a validation set (which determines the diagnostic performance) and the survey (from which we'd like to estimate seropos).
 //
-// This version of the model adjusts for company and sector-specific random effects
+// This version of the model adjusts for company specific random effects
 
 data {
   int<lower=1> N_survey; //number of participants in the survey
