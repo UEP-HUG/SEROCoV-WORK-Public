@@ -15,7 +15,7 @@ data {
   int<lower=1, upper=N_companies> company[N_survey]; //company observed
   int<lower=1, upper=N_sectors> company_sector_mapping[N_companies]; //company to sector mapping
   int<lower=1> p_vars; //number of variables to adjust for
-  matrix[N_survey, p_vars] X; //covariate model matrix (age, sex, week in these analyses)
+  matrix[N_survey, p_vars] X; //covariate model matrix (age, sex, covariate in these analyses)
   int<lower=0> N_pos_control; //number of positive controls in the validation data
   int<lower=0,upper=N_pos_control> control_tp; // number of true positive tests in the validation data
   int<lower=0> N_neg_control; // number of negative controls in the validation data
@@ -34,11 +34,11 @@ parameters {
 transformed parameters {
   vector<lower=0, upper=1>[N_survey] p; // probability of seropositivity for an observation
   vector[N_companies] eta; // company random effects
-  
+
   for (i in 1:N_companies) {
     eta[i] = mu_sector[company_sector_mapping[i]] + sigma_sector[company_sector_mapping[i]] * eta_raw[i];
   }
-  
+
   p = inv_logit(X * beta + eta[company]);
 }
 
@@ -49,15 +49,15 @@ model {
   target+= bernoulli_lpmf(survey_pos | p*sens+(1-p)*(1-spec));
   target+= binomial_lpmf(control_tp | N_pos_control, sens);
   target+= binomial_lpmf(control_fp | N_neg_control, 1-spec);
-  
+
   // Multilevel model of company random effects
- // eta_raw ~ std_normal(); // standard normal for raw company effect 
+ // eta_raw ~ std_normal(); // standard normal for raw company effect
   target += std_normal_lpdf(eta_raw);
 //  sigma_sector ~ std_normal();//normal(0, 1); // within-sector variance
   target += std_normal_lpdf(sigma_sector);
-  
+
  // beta ~ std_normal(); // priors for coefficients
-  target += std_normal_lpdf(beta);  
+  target += std_normal_lpdf(beta);
 //  mu_sector ~ std_normal();//normal(0, 1);
   target += std_normal_lpdf(mu_sector);
 
@@ -66,9 +66,9 @@ model {
 
 generated quantities {
   vector[N_survey] log_lik;
-  
+
   for(i in 1:N_survey){
     log_lik[i] = bernoulli_logit_lpmf(survey_pos[i] | p[i]*sens+(1-p[i])*(1-spec));
   }
-  
+
 }
